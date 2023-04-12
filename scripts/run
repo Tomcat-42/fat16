@@ -42,6 +42,8 @@ done
 # First, whe should build copy all of the .ko files to the busybox/_install directory so that they can be loaded
 # by the kernel.
 find . -name "*.ko" -exec cp {} "$BUSYBOX"/_install/ \;
+find . -name "*.img" -exec cp {} "$BUSYBOX"/_install/ \;
+cp assets/test.sh "$BUSYBOX"/_install/
 
 # now, we generate the initramfs
 pushd "$BUSYBOX"/_install > /dev/null || exit
