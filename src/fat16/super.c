@@ -61,63 +61,6 @@ unsigned int fat16_next_cluster(struct super_block *sb,
 	return next_cluster;
 }
 
-// ssize_t fat16_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
-// {
-// 	struct file *file = iocb->ki_filp;
-// 	struct inode *inode = file_inode(file);
-// 	struct super_block *sb = inode->i_sb;
-// 	struct fat16_super *fs_info = sb->s_fs_info;
-//
-// 	loff_t pos = iocb->ki_pos;
-// 	unsigned int starting_cluster = inode->i_ino;
-// 	ssize_t total_bytes_read = 0;
-// 	ssize_t bytes_to_read;
-// 	struct buffer_head *bh;
-// 	size_t left;
-//
-// 	while (iov_iter_count(iter) > 0) {
-// 		// Convert the starting cluster to a block index
-// 		unsigned int blk_index = starting_cluster +
-// 					 fs_info->data_offset -
-// 					 2 * fs_info->sectors_per_cluster;
-//
-//     // print the current block index as byte offset
-//     pr_info("fat16: reading block %lu", blk_index * sb->s_blocksize);
-//
-// 		// Read the data block
-// 		bh = sb_bread(sb, blk_index);
-// 		if (!bh) {
-// 			// Handle the case where the block could not be read
-// 			break;
-// 		}
-//
-// 		// Calculate how many bytes to read in this iteration
-// 		bytes_to_read =
-// 			min_t(size_t, bh->b_size - pos, iov_iter_count(iter));
-//
-// 		// Copy data from the buffer head to the destination iov_iter
-// 		left = copy_to_iter(bh->b_data + pos, bytes_to_read, iter);
-//
-// 		// Release the buffer head
-// 		brelse(bh);
-//
-// 		// Update the file position, the starting cluster, and the total bytes read
-// 		pos += (bytes_to_read - left);
-// 		starting_cluster = fat16_next_cluster(sb, starting_cluster);
-// 		total_bytes_read += (bytes_to_read - left);
-//
-// 		// Handle reading errors or EOF
-// 		if (left || starting_cluster == FAT16_CLUSTER_END) {
-// 			break;
-// 		}
-// 	}
-//
-// 	// Update the file position
-// 	iocb->ki_pos = pos;
-//
-// 	return total_bytes_read;
-// }
-
 int fat16_file_open(struct inode *inode, struct file *filp)
 {
 	// pr_info("fat16_file_open: %s", __func__);
@@ -251,54 +194,6 @@ struct inode *fat16_inode_create(struct super_block *sb,
 	return inode;
 }
 
-// struct inode *fat16_inode_create(struct super_block *sb,
-// 				 struct fat16_dentry *dentry_buf)
-// {
-// 	struct inode *inode = NULL;
-// 	struct fat16_inode *fat16_inode_buf;
-// 	unsigned int attributes;
-//
-// 	pr_info("fat16_inode_create: %s", __func__);
-//
-// 	// Allocate a new fat16_inode structure using kmalloc
-// 	fat16_inode_buf = kmalloc(sizeof(struct fat16_inode), GFP_KERNEL);
-// 	if (!fat16_inode_buf) {
-// 		pr_err("fat16_inode_create: failed to allocate fat16_inode_buf");
-// 		return NULL;
-// 	}
-//
-// 	// Assign the address of the vfs_inode inside the fat16_inode structure to 'inode'
-// 	inode = &fat16_inode_buf->vfs_inode;
-//
-// 	// Initialize the VFS inode with the superblock
-// 	inode_init_once(inode);
-// 	inode->i_sb = sb;
-//
-// 	attributes = dentry_buf->attributes;
-//
-// 	// Set the inode's attributes based on the dentry_buffer
-// 	inode->i_ino = get_next_ino();
-// 	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
-// 	inode->i_size = le32_to_cpu(dentry_buf->size);
-//
-// 	// Set the appropriate inode and file operations for files and directories
-// 	if (attributes & FAT16_FILE_ATTR_DIR) {
-// 		inode->i_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP |
-// 				S_IROTH | S_IXOTH;
-// 		inode->i_op = &fat16_dir_inode_operations;
-// 		inode->i_fop = &fat16_dir_operations;
-// 	} else if (attributes & FAT16_FILE_ATTR_FILE) {
-// 		inode->i_mode = S_IFREG | S_IRWXU | S_IRGRP | S_IROTH;
-// 		inode->i_op = &fat16_file_inode_operations;
-// 		inode->i_fop = &fat16_file_operations;
-// 	}
-//
-// 	// Copy the dentry_buf (fat16_dentry) to the custom inode structure (fat16_inode)
-// 	memcpy(&fat16_inode_buf->dentry, dentry_buf,
-// 	       sizeof(struct fat16_dentry));
-//
-// 	return inode;
-// }
 
 static int read_dentry_by_index(struct inode *dir,
 				struct fat16_dentry *dentry_buffer, int index)
@@ -577,60 +472,6 @@ int fat16_superblock_fill(struct super_block *sb, void *data, int silent)
 	}
 
 	sb->s_root = root_dentry;
-	// pr_info("fat16_fill_super: reading the first block of the root directory");
-	// if (!(bh = sb_bread(sb, sbi->root_dir_offset))) {
-	// 	pr_err("fat16_fill_super: unable to read the first block of the root directory");
-	// 	brelse(bh);
-	// 	return -EINVAL;
-	// }
-
-	//
-	// root_inode->i_op = &fat16_rootdir_inode_operations;
-	// root_inode->i_fop = &fat16_rootdir_file_operations;
-	// root_inode->i_mode |= S_IFDIR;
-	//
-	// /* Creation of the root dentry */
-	// if (!(root_dentry = d_make_root(root_inode))) {
-	// 	pr_err("fat16_fill_super: unable to create root dentry");
-	// 	iput(root_inode);
-	// 	kfree(root_inode);
-	// 	brelse(bh);
-	// 	return -EINVAL;
-	// }
-	//
-	// sb->s_root = root_dentry;
-
-	// /* Read FAT */
-	// fat_length = sbi->num_fats * sbi->fat_size_sectors;
-	// pr_info("fat16_fill_super: fat_length: %lu", fat_length);
-	// if (!(fat = kmalloc(fat_length * sb->s_blocksize, GFP_KERNEL))) {
-	// 	pr_err("fat16_fill_super: unable to allocate memory for fat");
-	// 	brelse(bh);
-	// 	return -ENOMEM;
-	// }
-	//
-	// /*
-	//    * Read all FAT data
-	//    * NOTE: Here I copy both FATs into the same buffer.
-	//    */
-	// fat_sector = bpb->reserved_sectors;
-	// pr_info("fat16 reserved_sectors: %d", bpb->reserved_sectors);
-	// pr_info("fat16 fat_length: %lu", fat_length);
-	// for (i = 0; i < fat_length; i++) {
-	// 	if (!(bh = sb_bread(sb, fat_sector + i))) {
-	// 		pr_err("fat16_fill_super: unable to read block %lu",
-	// 		       sbi->fat_offset + i);
-	// 		kfree(fat);
-	// 		brelse(bh);
-	// 		return -EINVAL;
-	// 	}
-	// 	// pr_info("fat16 I am here");
-	// 	memcpy(fat + i * sb->s_blocksize, bh->b_data, sb->s_blocksize);
-	// 	brelse(bh);
-	// }
-
-	/* Release the buffers */
-	// kfree(sbi);
 	brelse(bh);
 	return 0;
 }
