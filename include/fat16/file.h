@@ -4,6 +4,8 @@
 #include <linux/fs.h>
 #include <linux/init.h>
 
+#include <fat16/dentry.h>
+
 enum fat16_file_type {
   FAT16_FILE_ATTR_FILE = 0x20,
   FAT16_FILE_ATTR_DIR = 0x10
@@ -11,6 +13,7 @@ enum fat16_file_type {
 
 struct fat16_file {
 	struct file vfs_file;
+  struct fat16_dentry *dentry;
 };
 
 struct fat16_dentry {

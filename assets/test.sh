@@ -5,7 +5,9 @@ mkdir -p 4sectorpercluster
 
 insmod fat16.ko
 
-# mount -t fat16 fat16_4sectorpercluster.img 4sectorpercluster
+mount -t fat16 fat16_4sectorpercluster.img 4sectorpercluster
 mount -t fat16 fat16_1sectorpercluster.img 1sectorpercluster
+
+# cat 1sectorpercluster/TESTE.TXT
 
 dmesg | grep fat16
