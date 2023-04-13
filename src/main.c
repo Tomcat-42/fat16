@@ -4,11 +4,12 @@
 #include <linux/errno.h>
 
 #include <fat16/super.h>
+#include <fat16/dentry.h>
 
 static struct file_system_type fat16_fs_type = { .owner = THIS_MODULE,
 						 .name = "fat16",
-						 .mount = fat16_mount,
-						 .kill_sb = kill_block_super,
+						 .mount = fat16_dentry_mount,
+						 .kill_sb = fat16_superblock_kill,
 						 .fs_flags = FS_REQUIRES_DEV };
 
 static int __init fat16_init(void)
@@ -41,4 +42,4 @@ module_exit(fat16_exit);
 MODULE_ALIAS_FS("fat16");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pablo Alessandro Santos Hugen <pablohuggem@gmail.com>");
-MODULE_DESCRIPTION("FAT16 Filesystem Module");
+MODULE_DESCRIPTION("FAT16 Filesystem Driver");

@@ -1,46 +1,69 @@
+#ifndef FAT16_SUPER_H
+#define FAT16_SUPER_H
+
 #include <linux/fs.h>
 
-// struct fat16_superblock {
-// 	uint32_t fat_offset;
-// 	uint16_t sectors_per_cluster;
-// 	uint32_t first_data_sector;
-// 	uint32_t data_sectors;
-// 	uint32_t data_clusters;
-// 	uint32_t root_dir_sectors;
-// 	uint32_t root_dir_offset;
-// };
-
-struct fat16_super_block_info {
-	u32 fat_offset; // Offset of the first FAT
-	u32 root_dir_offset; // Offset of the root directory
-	u32 data_offset; // Offset of the data area
-	u32 sectors_per_cluster; // Number of sectors per cluster
-	u32 fat_size_sectors; // Number of sectors per FAT
-	u32 cluster_size; // Size of a cluster in bytes
-	u32 num_fats; // Number of FATs
-	u32 max_root_entries; // Maximum number of root directory entries
+/**
+ * fat16_superblock - in-memory superblock for fat16
+ *
+ * The fields are auto explicative.
+ */
+struct fat16_super {
+	u32 bytes_per_sector;
+	u32 sectors_per_cluster;
+	u32 reserved_sectors;
+	u32 number_of_fats;
+	u32 root_entries;
+	u32 total_sectors;
+	u32 sectors_per_fat;
+	u32 root_dir_sectors;
+	u32 fat_offset;
+	u32 root_dir_offset;
+	u32 data_offset;
+	u32 data_sectors;
+	u32 total_clusters;
 };
 
 /**
- * fa16_fill_super - fill a superblock with a fat16 filesystem
- * @sb: superblock to fill
- * @data: data passed to mount
- * @silent: don't print errors
- */
-int fat16_fill_super(struct super_block *sb, void *data, int silent);
+* fat16_bpb - in-disk BIOS Parameter Block
+*
+* This is the first sector of a FAT16 volume. It contains information
+* about the volume, including the size of the FAT, the size of the
+* root directory, and the size of the data area.
+*/
+struct fat16_bpb {
+	u8 jmp[3];
+	u8 oem[8];
+	u16 bytes_per_sector;
+	u8 sectors_per_cluster;
+	u16 reserved_sectors;
+	u8 number_of_fats;
+	u16 root_entries;
+	u16 total_sectors;
+	u8 media_descriptor;
+	u16 sectors_per_fat;
+	u16 sectors_per_track;
+	u16 number_of_heads;
+	u32 hidden_sectors;
+	u32 large_sectors;
+	u8 drive_number;
+	u8 reserved;
+	u8 boot_signature;
+	u32 volume_id;
+	u8 volume_label[11];
+	u8 system_id[8];
+	u8 boot_code[448];
+	u16 boot_sector_signature;
+} __attribute__((packed));
 
-/**
- * fat16_mount - mount a fat16 filesystem
- * @fs_type: the filesystem type
- * @flags: mount flags
- * @dev_name: device name
- * @data: data passed to mount
- */
-struct dentry *fat16_mount(struct file_system_type *fs_type, int flags,
-			   const char *dev_name, void *data);
+/* superblock operations for fat16 */
+extern const struct super_operations fat16_super_operations;
 
-/**
-* fat16_kill_sb - kill a fat16 superblock
-  * @sb: superblock to kill
-  */
-void fat16_kill_sb(struct super_block *sb);
+int fat16_superblock_fill(struct super_block *sb, void *data, int silent);
+
+void fat16_superblock_kill(struct super_block *sb);
+
+void fat16_superblock_put(struct super_block *sb);
+
+
+#endif
